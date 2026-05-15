@@ -1,36 +1,41 @@
 const axios = require('axios');
 
-const SQUAD_BASE_URL = 'https://sandbox-api.squadco.com';
-const SQUAD_SECRET_KEY = process.env.SQUAD_SECRET_KEY;
+const SQUAD_BASE_URL = 'https://sandbox-api-d.squadco.com'; // NOTE the '-d'
+const SQUAD_SECRET_KEY = process.env.SQUAD_SECRET_KEY; 
 
 const squadHeaders = {
     'Authorization': `Bearer ${SQUAD_SECRET_KEY}`,
     'Content-Type': 'application/json'
 };
 
+
 /**
  * Initiates an escrow payment
  * @param {number} amount - Amount in Naira
  * @param {string} email - Buyer's email
  * @param {string} shipmentId - Reference ID
+ * @param {string} callbackUrl - Optional redirect URL after payment
  */
-exports.initiatePayment = async (amount, email, shipmentId) => {
+exports.initiatePayment = async (amount, email, shipmentId, callbackUrl = 'https://www.linkedin.com/') => {
     try {
         const payload = {
             amount: amount * 100, // Convert to kobo
             email: email,
             currency: "NGN",
             initiate_type: "inline",
-            transaction_ref: `SENTINEL-${shipmentId}-${Date.now()}`
+            transaction_ref: `SENTINEL-${shipmentId}-${Date.now()}`,
+            callback_url: callbackUrl
         };
 
         const response = await axios.post(`${SQUAD_BASE_URL}/transaction/initiate`, payload, { headers: squadHeaders });
         return response.data.data;
     } catch (error) {
+
         console.error('Squad Initiate Error:', error.response ? error.response.data : error.message);
         throw new Error(error.response?.data?.message || 'Failed to initiate payment');
     }
 };
+
 
 /**
  * Verifies a transaction

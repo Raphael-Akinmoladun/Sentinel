@@ -2,6 +2,61 @@ const Shipment = require('../models/shipment');
 const User = require('../models/User');
 
 /**
+ * Get basic shipment details for the Smart Escrow funding page
+ * (Public route so users can see what they are funding before login/payment)
+ */
+exports.getPublicShipmentDetails = async (req, res) => {
+    try {
+        const id = req.params.id;
+        
+        // 1. Try finding a Shipment first
+        let shipment = await Shipment.findById(id).populate('supplierId', 'businessName');
+
+        if (shipment) {
+            return res.status(200).json({
+                success: true,
+                type: 'shipment',
+                data: {
+                    productName: shipment.productName,
+                    amount: shipment.amount,
+                    supplierName: shipment.supplierId.businessName,
+                    virtualAccount: {
+                        account_name: shipment.supplierId.businessName,
+                        account_number: shipment.supplierAccountNumber,
+                        bank_name: shipment.supplierBankName
+                    }
+                }
+            });
+        }
+
+        // 2. If not a shipment, try finding a User (Supplier)
+        const supplier = await User.findById(id);
+        if (supplier && supplier.role === 'supplier') {
+            return res.status(200).json({
+                success: true,
+                type: 'supplier',
+                data: {
+                    productName: 'Custom Payment',
+                    amount: 0,
+                    supplierName: supplier.businessName,
+                    virtualAccount: {
+                        account_name: supplier.businessName,
+                        account_number: supplier.supplierAccountNumber || '0000000000',
+                        bank_name: supplier.supplierBankName || 'Sentinel Bank'
+                    }
+                }
+            });
+        }
+
+        return res.status(404).json({ message: 'No shipment or supplier found with this ID' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching details', error: error.message });
+    }
+};
+
+
+
+/**
  * Create a new shipment (Buyer only)
  */
 exports.createShipment = async (req, res) => {

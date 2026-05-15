@@ -12,8 +12,20 @@ const requireAuth = async (req, res, next) => {
             // Extract the token (Format: "Bearer eyJhbGciOiJIUz...")
             token = req.headers.authorization.split(' ')[1];
 
+            // --- DEMO BYPASS START ---
+            if (token === 'DUMMY_BUYER_TOKEN') {
+                req.user = await User.findById('6a05d3c60e32d8b60b7f0411').select('-password');
+                return next();
+            }
+            if (token === 'DUMMY_SUPPLIER_TOKEN') {
+                req.user = await User.findById('6a05d2380e32d8b60b7f0410').select('-password');
+                return next();
+            }
+            // --- DEMO BYPASS END ---
+
             // Verify the token using your secret key from the .env file
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
 
             // Find the user in the database and attach them to the request object
             // .select('-password') ensures we never accidentally expose the hashed password

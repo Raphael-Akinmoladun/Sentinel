@@ -2,8 +2,18 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../middlewares/uploadMiddleware');
 const { verifyProductImage } = require('../controllers/verificationController');
-const { createShipment, getMyShipments, getShipmentById, retryPayout } = require('../controllers/shipmentController');
+const { 
+    createShipment, 
+    getMyShipments, 
+    getShipmentById, 
+    retryPayout,
+    getPublicShipmentDetails
+} = require('../controllers/shipmentController');
 const { requireAuth, requireRole } = require('../middlewares/authMiddleware');
+
+// Public route for Smart Escrow page
+router.get('/details/:id', getPublicShipmentDetails);
+
 
 // 1. Create a shipment (Buyer only)
 router.post('/', requireAuth, requireRole('buyer'), createShipment);
